@@ -88,6 +88,18 @@ def outliersToNan(data):
 
 
 
-    
+def seperateGrandeurs(df,grandeurs = {"temperature": [],"co2": [],"humidity": [],"sound": [],"tvoc": []}):
+    '''Demonstrates triple double quotes
+    docstrings and does nothing really.'''
+    for grandeurs_key in  grandeurs:
+        grandeurs[grandeurs_key] = []        
+    colonnesName=df.columns
+    #grandeurs = {"temperature": [],"co2": [],"humidity": [],"sound": [],"tvoc": []}
+    for grandeurs_key in  grandeurs:
+        for name in colonnesName:            
+            if name.find(grandeurs_key)==0:
+                grandeurs[grandeurs_key].append(name)
+                
+    return grandeurs     
     
     
