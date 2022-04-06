@@ -1,2 +1,4 @@
 *.php
 *.npy
+*.txt
+*.csv
