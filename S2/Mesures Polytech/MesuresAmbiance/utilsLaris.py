@@ -66,9 +66,7 @@ def dataFusion(dictSensors, salle=219):
 
 def resampleSensors(dictSensors,period='5T',categorical = False):
     ''' 
-    This function makes it possible to aggregate the data according to a given period (5T: for 5 min)
-    
-    '''
+    This function makes it possible to aggregate the data according to a given period (5T: for 5 min)'''
     if categorical :
         dict=dictSensors.copy()
         for cle, valeur in dict.items():       
@@ -149,12 +147,15 @@ def importData():
     wget.download("https://biot.u-angers.fr/s114.php")
     wget.download("https://biot.u-angers.fr/shelly.php")
 
-    for salle in ["s114",'s219']:
+    for salle in ["s114",'s219', 'shelly']:
         #raw_data = pd.read_csv("test.txt", sep=";")
         sallePhp = salle
         raw_data = pd.read_csv(sallePhp+".php", sep=";")
-        data,outliers = outliersToNan(raw_data)
+        if sallePhp != 'shelly':
+            data,outliers = outliersToNan(raw_data)
+        else :
+            data = raw_data
         # Separate sensors and save as dictionary
         filename = sallePhp
         # separteSensors(data, filename, save=False)
-        DataSensors = separteSensors(data,filename, True )
+        DataSensors = separteSensors(data,filename, save = True )

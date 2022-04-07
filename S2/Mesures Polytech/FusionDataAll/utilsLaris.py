@@ -108,8 +108,7 @@ def outliersToNan(data):
 
 
 def seperateGrandeurs(df,grandeurs = ["temperature","co2","humidity","sound","tvoc"]):
-    '''This function separates the data of a dataFrame by garndeur defined in the variable grandeurs.
-    To call this function use grandeursTemp = seperateGrandeurs(df,grandeurs = {"temperature":,"co2":,"humidity":,"sound":,"tvoc":}).'''
+    '''This function separates the data of a dataFrame by garndeur defined in the variable grandeurs. To call this function use grandeursTemp = seperateGrandeurs(df,grandeurs = {"temperature":,"co2":,"humidity":,"sound":,"tvoc":}).'''
     grandeurs = {grandeurs[i]: [] for i in range(len(grandeurs))}
     grandeursTemp=grandeurs.copy()
     for grandeursTemp_key in  grandeursTemp:
@@ -159,4 +158,4 @@ def importData():
         # Separate sensors and save as dictionary
         filename = sallePhp
         # separteSensors(data, filename, save=False)
-        DataSensors = separteSensors(data,filename, True )
+        DataSensors = separteSensors(data,filename, save = True )
