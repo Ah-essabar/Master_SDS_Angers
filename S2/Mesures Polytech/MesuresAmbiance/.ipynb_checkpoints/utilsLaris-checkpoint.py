@@ -1,11 +1,16 @@
+import pandas as pd
+import numpy as np
+import os
+import wget
+
 def separteSensors(data, filename, save=False):
-    import pandas as pd
-    import numpy as np
+    '''
+    this function separates the data for a room, dataframs are created by sensor in the form of a dictionary. the call to the separteSensors(data, filename, save=False) function: filename is the name  to save the dictionary if save is True'''
+    
     # Number of sensors
     nb_sensors = len(pd.unique(data['sensor'])) 
     sensors_list = data.sensor.unique()
     print("We have ",nb_sensors," sensors. Their Id are ", [i_sensor for i,i_sensor in enumerate(sensors_list)])
-
     # Separate each sensor data and create a dictionary for all sensors 
     # the dataframe of each senor can be extracted from dictionary ex : DataSensors["sensor_100"]
     DataSensors={}
@@ -27,7 +32,9 @@ def separteSensors(data, filename, save=False):
 
 ## fusion des données par master and all
 def dataFusion(dictSensors, salle=219):
-    salle = int(salle)
+    '''merging of data by Master and all
+    ex: df1,df2,df3,df4,df = dataFusion(dictSensors, room=219)
+    salle = int(salle)'''
     if salle == 219:
         dict=dictSensors.copy()
         dfs =[dict['sensor_100'],dict['sensor_101'],dict['sensor_102'], dict['sensor_103']]
@@ -57,18 +64,30 @@ def dataFusion(dictSensors, salle=219):
     
 
 
-def resampleSensors(dictSensors,period='5T'):
-    dict=dictSensors.copy()
-    for cle, valeur in dict.items():       
-        sensortemp = valeur.resample(period).mean()
-        dictTemp= {cle: sensortemp }
-        dict.update(dictTemp) 
-    return dict
+def resampleSensors(dictSensors,period='5T',categorical = False):
+    ''' 
+    This function makes it possible to aggregate the data according to a given period (5T: for 5 min)'''
+    if categorical :
+        dict=dictSensors.copy()
+        for cle, valeur in dict.items():       
+            sensortemp = valeur.resample(period)
+            sensortemp = sensortemp.bfill()
+            dictTemp= {cle: sensortemp }
+            dict.update(dictTemp) 
+        return dict
+
+    else :
+        dict=dictSensors.copy()
+        for cle, valeur in dict.items():       
+            sensortemp = valeur.resample(period).mean()
+            dictTemp= {cle: sensortemp }
+            dict.update(dictTemp) 
+        return dict
 
 
 
-def outliersToNan(data):     
-    import numpy as np
+def outliersToNan(data):
+    ''' This function replaces outliers with np.nan'''
     outlier_temp = np.where((data['temperature'] >= (60)) ) # 60°C
     outlier_humidity = np.where(data['humidity'] >= (100)) # 100 %
     outlier_tvoc = np.where(data['tvoc'] >= (10000)) # 10 000 ppb
@@ -88,9 +107,9 @@ def outliersToNan(data):
 
 
 
-def seperateGrandeurs(df,grandeurs = {"temperature": [],"co2": [],"humidity": [],"sound": [],"tvoc": []}):
-    '''Demonstrates triple double quotes
-    docstrings and does nothing really.'''
+def seperateGrandeurs(df,grandeurs = ["temperature","co2","humidity","sound","tvoc"]):
+    '''This function separates the data of a dataFrame by garndeur defined in the variable grandeurs. To call this function use grandeursTemp = seperateGrandeurs(df,grandeurs = {"temperature":,"co2":,"humidity":,"sound":,"tvoc":}).'''
+    grandeurs = {grandeurs[i]: [] for i in range(len(grandeurs))}
     grandeursTemp=grandeurs.copy()
     for grandeursTemp_key in  grandeursTemp:
         grandeursTemp[grandeursTemp_key] = []        
@@ -101,8 +120,39 @@ def seperateGrandeurs(df,grandeurs = {"temperature": [],"co2": [],"humidity": []
             if name.find(grandeursTemp_key)==0:
                 grandeursTemp[grandeursTemp_key].append(name)
                 
-    return grandeursTemp     
-    
-    
-    
-    
+    return grandeursTemp
+
+
+def df_column_uniquify(df):
+    df_columns = df.columns
+    new_columns = []
+    for item in df_columns:
+        counter = 0
+        newitem = item
+        while newitem in new_columns:
+            counter += 1
+            newitem = "{}_{}".format(item, counter)
+        new_columns.append(newitem)
+    df.columns = new_columns
+    return df
+
+def importData():    
+    if os.path.isfile("s114.php")==True:
+        os. remove("s114.php")
+    if os.path.isfile("s219.php")==True:
+        os. remove("s219.php")
+    if os.path.isfile("shelly.php")==True:
+        os. remove("shelly.php")    
+    wget.download("https://biot.u-angers.fr/s219.php")
+    wget.download("https://biot.u-angers.fr/s114.php")
+    wget.download("https://biot.u-angers.fr/shelly.php")
+
+    for salle in ["s114",'s219']:
+        #raw_data = pd.read_csv("test.txt", sep=";")
+        sallePhp = salle
+        raw_data = pd.read_csv(sallePhp+".php", sep=";")
+        data,outliers = outliersToNan(raw_data)
+        # Separate sensors and save as dictionary
+        filename = sallePhp
+        # separteSensors(data, filename, save=False)
+        DataSensors = separteSensors(data,filename, True )
