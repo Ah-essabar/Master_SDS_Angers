@@ -2,6 +2,12 @@ import pandas as pd
 import numpy as np
 import os
 import wget
+import glob
+import functools
+
+prefixFiles = {"ElecS219" :"S219*.csv","ElecS114" :"S114*.csv", "Weather" :"WeatherFile*.txt"}
+prefixFile = "ElecS219"
+
 
 def separteSensors(data, filename, save=False):
     '''
@@ -31,7 +37,7 @@ def separteSensors(data, filename, save=False):
     
 
 ## fusion des données par master and all
-def dataFusionA(dictSensors, salle=219, all_df = False):
+def dataFusionAmbiance(dictSensors, salle=219, all_df = False):
     '''merging of data by Master and all
     ex: df1,df2,df3,df4,df = dataFusion(dictSensors, room=219)
     salle = int(salle)'''
@@ -154,6 +160,7 @@ def df_column_uniquify(df):
     df.columns = new_columns
     return df
 
+
 def importData():    
     if os.path.isfile("s114.php")==True:
         os. remove("s114.php")
@@ -177,3 +184,50 @@ def importData():
         filename = sallePhp
         # separteSensors(data, filename, save=False)
         DataSensors = separteSensors(data,filename, save = True )
+        
+def readData(period='5T'):
+    tab=[]
+    for fileNpy in ["s114","s219","shelly"]:
+        filename = fileNpy+'.npy'    
+        dictionary = np.load(filename,allow_pickle='TRUE').item()
+        dictSensors = dictionary.copy()
+        dict = dictSensors .copy()
+        if fileNpy != "shelly" :
+            categorical = False
+        else :
+            categorical = True
+        tab.append(resampleSensors(dictSensors, period = period,categorical = categorical))
+    return tab
+
+def dataPreparationElec(data, period = "5T"):
+    data = data.set_index("date") 
+    data.index = pd.to_datetime(data.index)
+    data = data.clean_names() # janitor
+    data.fillna(0,inplace=True)
+    data = data.resample(period).mean()
+    return data
+
+
+def mergeMultipleCSV_Files(dirctory="./Data", prefixFile = prefixFile): 
+    # merging the files
+    joined_files = os.path.join(dirctory, prefixFile)
+    # A list of all joined files is returned
+    joined_list = glob.glob(joined_files)
+    # Finally, the files are joined
+    if prefixFile == "S219*.csv":
+        li_mapper = map(lambda filename: pd.read_csv(filename, sep=",", skiprows=(1),names = ['date','general_219_w', 'eclairage_219_w']),joined_list)
+    if prefixFile == "S114*.csv":
+        li_mapper = map(lambda filename: pd.read_csv(filename, sep=",", skiprows=(1),names =["date","Prises_114_W","General_114_W","Eclairage_114_W","Videoproj_114_W"]),joined_list)
+    if prefixFile == "WeatherFile*.txt" :
+        li_mapper = map(lambda filename: pd.read_csv(filename, sep="\t",skiprows=(1),parse_dates=[['Date','Time']],dayfirst=True),joined_list)
+    li_2 = list(li_mapper)
+    df = pd.concat(li_2, axis=0, ignore_index= True)
+    return df
+        
+        
+
+def dataFusionAll(dfs, shelly_sensors,ResampledDict_shelly):
+    for sensor_name in shelly_sensors: 
+        dfs.append(ResampledDict_shelly[sensor_name])
+    df = functools.reduce(lambda left,right: pd.merge(left,right,on='date'), dfs)
+    return df         
