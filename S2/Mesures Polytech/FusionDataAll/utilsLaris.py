@@ -204,6 +204,7 @@ def dataPreparationElec(data, period = "5T"):
     data = data.set_index("date") 
     data.index = pd.to_datetime(data.index)
     data = data.clean_names() # janitor
+    data.columns="elec_"+data.columns
     data.fillna(0,inplace=True)
     data = data.resample(period).mean()
     return data
@@ -216,6 +217,7 @@ def dataPreparationWeather(weatherData, period = "5T"):
     # df_column_uniquify : allows to have unique column names
     weatherData  = df_column_uniquify(weatherData )
     weatherData  = weatherData[['out','hum','bar_','rad_']]
+    weatherData.columns="weather_"+weatherData.columns
     weatherData  = weatherData .sort_index()
     # missing data in raw fil is coded as "---" . so we change this chaine by np.nan
     x = {'---':np.nan}
