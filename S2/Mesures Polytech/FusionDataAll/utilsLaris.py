@@ -1,4 +1,5 @@
 import pandas as pd
+import janitor
 import numpy as np
 import os
 import wget
@@ -206,6 +207,23 @@ def dataPreparationElec(data, period = "5T"):
     data.fillna(0,inplace=True)
     data = data.resample(period).mean()
     return data
+
+def dataPreparationWeather(weatherData, period = "5T"):
+    weatherData = weatherData.rename({'Date_Time':'date'}, axis=1)
+    weatherData  = weatherData .set_index("date")
+    # we use import janitor to clean colonne's name
+    weatherData = weatherData .clean_names()
+    # df_column_uniquify : allows to have unique column names
+    weatherData  = df_column_uniquify(weatherData )
+    weatherData  = weatherData[['out','hum','bar_','rad_']]
+    weatherData  = weatherData .sort_index()
+    # missing data in raw fil is coded as "---" . so we change this chaine by np.nan
+    x = {'---':np.nan}
+    weatherData = weatherData.replace(x)
+    weatherData = weatherData.astype(float)
+    weatherData = weatherData.resample(period,label='left', closed='left').mean()
+    weatherData = weatherData.interpolate(method='linear', limit_direction='both', axis=0)
+    return weatherData
 
 
 def mergeMultipleCSV_Files(dirctory="./Data", prefixFile = prefixFile): 
