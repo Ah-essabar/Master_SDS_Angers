@@ -2,3 +2,4 @@
 *.npy
 *.txt
 *.csv
+*.RData
