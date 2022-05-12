@@ -168,27 +168,18 @@ def importData(annee ="2022", n_monthStart=2,n_monthEnd=5 ):
     if os.path.isfile("s219.php")==True:
         os. remove("s219.php")
     if os.path.isfile("shelly.php")==True:
-        os. remove("shelly.php")
-   #####################   Vider le dossier   ImportedData
-    py_files = glob.glob('./ImportedData/*.txt')
-    for py_file in py_files:
-        try:
-            os.remove(py_file)
-        except OSError as e:
-            print(f"Error:{ e.strerror}")
-    ###################################        
-    wget.download("https://biot.u-angers.fr/shelly.php")    
+        os. remove("shelly.php")    
     for mois in range (n_monthStart,n_monthEnd+1):
         wget.download("https://biot.u-angers.fr/data/s114/"+annee+"/"+str(mois), out="ImportedData/s114_"+annee+"_"+str(mois)+".txt")
         wget.download("https://biot.u-angers.fr/data/s219/"+annee+"/"+str(mois), out="ImportedData/s219_"+annee+"_"+str(mois)+".txt")
         print(mois)
     print("start merging")    
     df_114 = mergeMultipleCSV_Files(dirctory = "./ImportedData", prefixFile = prefixFiles["Ambiance114"])
-    #df_114.se_index("id", inplace = True)
-    df_114.to_csv("s114.php",  sep=';', index=False)
+    df_114.se_index("id", inplace = True)
+    df_114.to_csv("s114.php")
     df_219 = mergeMultipleCSV_Files(dirctory = "./ImportedData", prefixFile = prefixFiles["Ambiance219"])
-    #df_219.se_index("id", inplace = True)
-    df_219.to_csv("s219.php", sep=';', index=False)
+    df_219.se_index("id", inplace = True)
+    df_219.to_csv("s219.php")
     for salle in ["s114",'s219', 'shelly']:
         #raw_data = pd.read_csv("test.txt", sep=";")
         sallePhp = salle
