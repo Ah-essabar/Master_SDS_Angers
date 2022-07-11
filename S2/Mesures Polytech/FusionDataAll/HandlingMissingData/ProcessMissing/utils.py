@@ -136,6 +136,35 @@ def RMSE(X, X_true, mask):
     else: # should be an ndarray
         mask_ = mask.astype(bool)
         return np.sqrt(((X[mask_] - X_true[mask_])**2).sum() / mask_.sum())
+    
+
+    
+def NRMSE(X, X_true, mask):
+    """
+    Root Mean Squared Error (MAE) between imputed variables and ground truth. Pytorch/Numpy agnostic
+
+    Parameters
+    ----------
+    X : torch.DoubleTensor or np.ndarray, shape (n, d)
+        Data with imputed variables.
+
+    X_true : torch.DoubleTensor or np.ndarray, shape (n, d)
+        Ground truth.
+
+    mask : torch.BoolTensor or np.ndarray of booleans, shape (n, d)
+        Missing value mask (missing if True)
+
+    Returns
+    -------
+        RMSE : float
+
+    """
+    if torch.is_tensor(mask):
+        mask_ = mask.bool()
+        return (((X[mask_] - X_true[mask_]) ** 2).sum() / mask_.sum()).sqrt()
+    else: # should be an ndarray
+        mask_ = mask.astype(bool)
+        return np.sqrt(((X[mask_] - X_true[mask_])**2).sum() / mask_.sum())    
 
 ##################### MISSING DATA MECHANISMS #############################
 
